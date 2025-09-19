@@ -7,18 +7,18 @@ import crypto from "crypto";
 
 const JWT_SECRET = process.env.JWT_SECRET!;
 
-const registerService = async (
+const register = async (
   name: string,
   email: string,
   password: string,
   role: "teacher" | "student" | "admin",
   is_blind = 0
 ) => {
-  const existing = userRepo.getUserByEmailRepo(email);
+  const existing = userRepo.getUserByEmail(email);
   if (existing) throw new Error("User already exists");
 
   const hash = await bcrypt.hash(password, 10);
-  const user: any = userRepo.createUserRepo({
+  const user: User = userRepo.createUser({
     name,
     email,
     password_hash: hash,
@@ -33,8 +33,8 @@ const registerService = async (
   };
 };
 
-const loginService = async (email: string, password: string) => {
-  const user = userRepo.getUserByEmailRepo(email) as User;
+const login = async (email: string, password: string) => {
+  const user = userRepo.getUserByEmail(email) as User;
   if (!user) throw new Error("Invalid email");
 
   const isValid = await bcrypt.compare(password, user.password_hash);
@@ -54,32 +54,32 @@ const loginService = async (email: string, password: string) => {
   };
 };
 
-const changePasswordService = async (
+const changePassword = async (
   userId: number,
   oldPassword: string,
   newPassword: string
 ) => {
-  const user = userRepo.getUserByIdRepo(userId) as User;
+  const user = userRepo.getUserById(userId) as User;
   if (!user) throw new Error("User not found");
 
   const isValid = await bcrypt.compare(oldPassword, user.password_hash);
   if (!isValid) throw new Error("Old password is incorrect");
 
   const newHash = await bcrypt.hash(newPassword, 10);
-  const updated = authRepo.updatePasswordRepo(userId, newHash);
+  const updated = authRepo.updatePassword(userId, newHash);
   if (!updated) throw new Error("Failed to update password");
 
   return true;
 };
 
-const forgotPasswordService = (email: string) => {
-  const user = userRepo.getUserByEmailRepo(email) as User;
+const forgotPassword = (email: string) => {
+  const user = userRepo.getUserByEmail(email) as User;
   if (!user) throw new Error("User not found");
 
   const token = crypto.randomBytes(32).toString("hex");
   const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 min
 
-  authRepo.createPasswordResetRepo(user.user_id!, token, expiresAt);
+  authRepo.createPasswordReset(user.user_id!, token, expiresAt);
 
   // Have to setup -> node-mailer over here
   return {
@@ -87,28 +87,28 @@ const forgotPasswordService = (email: string) => {
   };
 };
 
-const resetPasswordService = (token: string, newPassword: string) => {
-  const resetEntry = authRepo.findPasswordResetRepo(token);
+const resetPassword = (token: string, newPassword: string) => {
+  const resetEntry = authRepo.findPasswordReset(token);
   if (!resetEntry) throw new Error("Invalid or expired token");
 
   if (new Date(resetEntry.expires_at) < new Date()) {
-    authRepo.deletePasswordResetRepo(token);
+    authRepo.deletePasswordReset(token);
     throw new Error("Token expired");
   }
 
   const hashedPassword = bcrypt.hashSync(newPassword, 10);
-  authRepo.updatePasswordRepo(resetEntry.user_id, hashedPassword);
+  authRepo.updatePassword(resetEntry.user_id, hashedPassword);
 
-  authRepo.deletePasswordResetRepo(token);
+  authRepo.deletePasswordReset(token);
   return { message: "Password reset successful" };
 };
 
 const authService = {
-  registerService,
-  loginService,
-  changePasswordService,
-  forgotPasswordService,
-  resetPasswordService,
+  register,
+  login,
+  changePassword,
+  forgotPassword,
+  resetPassword,
 };
 
-export default authService
+export default authService;

@@ -4,7 +4,7 @@ import userController from "../controllers/userController";
 
 const router = Router();
 
-router.get("/me", authMiddleware, userController.meController);
+router.get("/me", authMiddleware, userController.me);
 
 
 export default router;

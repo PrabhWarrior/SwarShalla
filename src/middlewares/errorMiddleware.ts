@@ -1,4 +1,6 @@
 import { Request, Response, NextFunction } from "express";
+import logger from "../utils/logger";
+import { sendError } from "../utils/responseHandler";
 
 interface AppError extends Error {
   statusCode?: number;
@@ -10,7 +12,7 @@ export function errorMiddleware(
   res: Response,
   next: NextFunction
 ) {
-  console.error(`[Error] ${req.method} ${req.url}:`, err);
+  logger.error(`[Error] ${req.method} ${req.url}:`, err);
 
   const statusCode = err.statusCode || 500;
   const message =
@@ -18,8 +20,5 @@ export function errorMiddleware(
       ? "Something went wrong!"
       : err.message;
 
-  res.status(statusCode).json({
-    success: false,
-    error: message,
-  });
+  return sendError(res, message, statusCode);
 }

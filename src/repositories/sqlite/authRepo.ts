@@ -1,7 +1,8 @@
 import { sqliteDb } from "../../config/db";
 import { PasswordReset } from "../../interfaces/authInterface";
+import logger from "../../utils/logger";
 
-const isTokenBlackListedRepo = (token: string) => {
+const isTokenBlackListed = (token: string) => {
   const stmt = sqliteDb.prepare(`
       SELECT 1 FROM blacklisted_tokens 
       WHERE token = ? AND expires_at > datetime('now')
@@ -10,7 +11,7 @@ const isTokenBlackListedRepo = (token: string) => {
   return !!result;
 };
 
-const tokenDeleteBlacklistRepo = () => {
+const tokenDeleteBlacklist = () => {
   const deleteStmt = sqliteDb.prepare(`
       DELETE FROM blacklisted_tokens 
       WHERE expires_at <= datetime('now')
@@ -19,7 +20,7 @@ const tokenDeleteBlacklistRepo = () => {
   return result.changes;
 };
 
-const tokenAddBlacklistRepo = (token: string, userId: string, exp: number) => {
+const tokenAddBlacklist = (token: string, userId: string, exp: number) => {
   try {
     const expiresAt = new Date(exp * 1000);
 
@@ -35,7 +36,7 @@ const tokenAddBlacklistRepo = (token: string, userId: string, exp: number) => {
       wasNew: result.changes > 0,
     };
   } catch (error: any) {
-    console.error("Error blacklisting token:", error);
+    logger.error("Error blacklisting token:", error);
     return {
       success: false,
       error: error.message,
@@ -43,7 +44,7 @@ const tokenAddBlacklistRepo = (token: string, userId: string, exp: number) => {
   }
 };
 
-const updatePasswordRepo = (userId: number, newHash: string) => {
+const updatePassword = (userId: number, newHash: string) => {
   const stmt = sqliteDb.prepare(`
     UPDATE users SET password_hash = ? WHERE user_id = ?
   `);
@@ -51,7 +52,7 @@ const updatePasswordRepo = (userId: number, newHash: string) => {
   return result.changes > 0;
 };
 
-const createPasswordResetRepo = (
+const createPasswordReset = (
   userId: number,
   token: string,
   expiresAt: Date
@@ -63,25 +64,25 @@ const createPasswordResetRepo = (
     .run(userId, token, expiresAt.toISOString());
 };
 
-const findPasswordResetRepo = (token: string): PasswordReset | undefined => {
+const findPasswordReset = (token: string): PasswordReset | undefined => {
   const row = sqliteDb
     .prepare(`SELECT * FROM password_resets WHERE token = ?`)
     .get(token);
   return row as PasswordReset | undefined;
 };
 
-const deletePasswordResetRepo = (token: string) => {
+const deletePasswordReset = (token: string) => {
   sqliteDb.prepare(`DELETE FROM password_resets WHERE token = ?`).run(token);
 };
 
 const authRepo = {
-  isTokenBlackListedRepo,
-  tokenDeleteBlacklistRepo,
-  tokenAddBlacklistRepo,
-  updatePasswordRepo,
-  createPasswordResetRepo,
-  findPasswordResetRepo,
-  deletePasswordResetRepo,
+  isTokenBlackListed,
+  tokenDeleteBlacklist,
+  tokenAddBlacklist,
+  updatePassword,
+  createPasswordReset,
+  findPasswordReset,
+  deletePasswordReset,
 };
 
 export default authRepo;

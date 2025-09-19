@@ -4,14 +4,15 @@ import userRepo from "../repositories/sqlite/userRepo";
 import { User } from "../interfaces/userInterface";
 import { StatusCodes } from "http-status-codes";
 import { sendSuccess, sendError } from "../utils/responseHandler";
+import logger from "../utils/logger";
 
-const meController = (req: AuthRequest, res: Response) => {
+const me = (req: AuthRequest, res: Response) => {
   try {
     if (!req.user) {
       return sendError(res, "User not authenticated", StatusCodes.UNAUTHORIZED);
     }
 
-    const user = userRepo.getUserByIdRepo(req.user.id);
+    const user = userRepo.getUserById(req.user.id);
     if (!user) {
       return sendError(res, "User not found", StatusCodes.NOT_FOUND);
     }
@@ -29,7 +30,7 @@ const meController = (req: AuthRequest, res: Response) => {
       StatusCodes.OK
     );
   } catch (error) {
-    console.error("Error in /me endpoint:", error);
+    logger.error("Error in /me endpoint:", error);
     return sendError(
       res,
       "Failed to fetch user data",
@@ -39,5 +40,5 @@ const meController = (req: AuthRequest, res: Response) => {
   }
 };
 
-const userController = { meController };
+const userController = { me };
 export default userController;

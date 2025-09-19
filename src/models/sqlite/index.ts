@@ -5,6 +5,7 @@ import { createFeesTable } from "./fees";
 import { createPaymentsTable } from "./payments";
 import { blacklistedTokensTable } from "./blacklistUser";
 import { passwordResetsTable } from "./passwordResets";
+import logger from "../../utils/logger";
 
 export function initSQLiteTables() {
   createUserReposTable();
@@ -14,5 +15,5 @@ export function initSQLiteTables() {
   createPaymentsTable();
   blacklistedTokensTable();
   passwordResetsTable();
-  console.log("SQLite tables initialized");
+  logger.info("SQLite tables initialized");
 }

@@ -1,7 +1,7 @@
 import { sqliteDb } from "../../config/db";
 import { User } from "../../interfaces/userInterface";
 
-const createUserRepo = (user: User) => {
+const createUser = (user: User) => {
   const stmt = sqliteDb.prepare(`
     INSERT INTO users (name, email, password_hash, role, is_blind)
     VALUES (?, ?, ?, ?, ?)
@@ -16,11 +16,11 @@ const createUserRepo = (user: User) => {
   return { ...user, user_id: result.lastInsertRowid as number };
 };
 
-const getUserByEmailRepo = (email: string) =>
+const getUserByEmail = (email: string) =>
   sqliteDb.prepare(`SELECT * FROM users WHERE email = ?`).get(email);
 
-const getUserByIdRepo = (id: number) =>
+const getUserById = (id: number) =>
   sqliteDb.prepare(`SELECT * FROM users WHERE user_id = ?`).get(id);
 
-const userRepo = { createUserRepo, getUserByEmailRepo, getUserByIdRepo };
+const userRepo = { createUser, getUserByEmail, getUserById };
 export default userRepo;

@@ -1,7 +1,9 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
-import  authRepo from "../repositories/sqlite/authRepo";
+import authRepo from "../repositories/sqlite/authRepo";
 import { User } from "../interfaces/userInterface";
+import { sendError } from "../utils/responseHandler";
+import { StatusCodes } from "http-status-codes";
 
 const JWT_SECRET = process.env.JWT_SECRET!;
 
@@ -16,21 +18,19 @@ export const authMiddleware = (
 ) => {
   const authHeader = req.headers.authorization;
   if (!authHeader?.startsWith("Bearer ")) {
-    return res.status(401).json({
-      error: "Unauthorized",
-      message: "Bearer token required",
-    });
+    return sendError(res, "Bearer token required", StatusCodes.UNAUTHORIZED);
   }
 
   const token = authHeader.split(" ")[1];
 
   try {
-    const isBlacklisted = authRepo.isTokenBlackListedRepo(token);
+    const isBlacklisted = authRepo.isTokenBlackListed(token);
     if (isBlacklisted) {
-      return res.status(401).json({
-        error: "Token invalidated",
-        message: "Please login again",
-      });
+      return sendError(
+        res,
+        "Token invalidated. Please login again.",
+        StatusCodes.UNAUTHORIZED
+      );
     }
 
     const decoded = jwt.verify(token, JWT_SECRET) as User;
@@ -42,17 +42,18 @@ export const authMiddleware = (
         ? "Token expired"
         : "Invalid token";
 
-    return res.status(401).json({
-      error: "Unauthorized",
-      message,
-    });
+    return sendError(res, message, StatusCodes.UNAUTHORIZED);
   }
 };
 
 export const requireRoleMiddleware = (roles: string[]) => {
   return (req: AuthRequest, res: Response, next: NextFunction) => {
     if (!req.user || !roles.includes(req.user.role)) {
-      return res.status(403).json({ error: "Forbidden" });
+      return sendError(
+        res,
+        "Forbidden: insufficient role",
+        StatusCodes.FORBIDDEN
+      );
     }
     next();
   };

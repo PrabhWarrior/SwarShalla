@@ -1,11 +1,12 @@
 import authRepo from "../repositories/sqlite/authRepo";
+import logger from "../utils/logger";
 
 export const cleanupExpiredTokens = () => {
   try {
-    const deletedCount = authRepo.tokenDeleteBlacklistRepo();
-    console.log(`Cleaned up ${deletedCount} expired tokens`);
+    const deletedCount = authRepo.tokenDeleteBlacklist();
+    logger.info(`Cleaned up ${deletedCount} expired tokens`);
   } catch (error) {
-    console.error("Token cleanup error:", error);
+    logger.error("Token cleanup error:", error);
   }
 };
 

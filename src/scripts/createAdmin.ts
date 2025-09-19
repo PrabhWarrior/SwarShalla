@@ -3,6 +3,7 @@ import userRepo from "../repositories/sqlite/userRepo";
 import { sqliteDb } from "../config/db";
 import dotenv from "dotenv";
 import { User } from "../interfaces/userInterface";
+import logger from "../utils/logger";
 
 dotenv.config();
 
@@ -20,7 +21,7 @@ async function main() {
       .prepare(`SELECT * FROM users WHERE email = ?`)
       .get(adminEmail);
     if (existing) {
-      console.log("Admin user already exists:", existing);
+      logger.info("Admin user already exists:", existing);
       return;
     }
 
@@ -34,10 +35,10 @@ async function main() {
       is_blind: 0,
     };
 
-    const user = userRepo.createUserRepo(adminUser);
-    console.log("Admin user created successfully:", user);
+    const user = userRepo.createUser(adminUser);
+    logger.info("Admin user created successfully:", user);
   } catch (err) {
-    console.error("Error creating admin user:", err);
+    logger.error("Error creating admin user:", err);
   }
 }
 
