@@ -1,11 +1,12 @@
 import { openSqliteDb } from "../../config/db";
 import { User } from "../../interfaces/userInterface";
 
-const createUser = async (user: User): Promise<User & { user_id: number }> => {
+const createUser = async (user: User): Promise<User & { user_id: string }> => {
   const db = await openSqliteDb();
-  const result = await db.run(
+  const inserted = await db.get<{ user_id: string }>(
     `INSERT INTO users (name, email, password_hash, role, is_blind)
-     VALUES (?, ?, ?, ?, ?)`,
+     VALUES (?, ?, ?, ?, ?)
+     RETURNING user_id`,
     user.name,
     user.email,
     user.password_hash,
@@ -13,12 +14,9 @@ const createUser = async (user: User): Promise<User & { user_id: number }> => {
     user.is_blind ? 1 : 0
   );
 
-  if (result.lastID === undefined) {
-    throw new Error("Failed to retrieve last inserted ID for user");
-  }
-
-  return { ...user, user_id: result.lastID };
-};
+  if (!inserted) throw new Error("Failed to create user");
+  return { ...user, user_id: inserted.user_id };
+}
 
 const getUserByEmail = async (email: string): Promise<User | undefined> => {
   const db = await openSqliteDb();
@@ -26,7 +24,7 @@ const getUserByEmail = async (email: string): Promise<User | undefined> => {
   return row as User | undefined;
 };
 
-const getUserById = async (id: number): Promise<User | undefined> => {
+const getUserById = async (id: string): Promise<User | undefined> => {
   const db = await openSqliteDb();
   const row = await db.get(`SELECT * FROM users WHERE user_id = ?`, id);
   return row as User | undefined;
@@ -39,7 +37,7 @@ const getAllUsers = async (): Promise<User[]> => {
 };
 
 const updateUser = async (
-  id: number,
+  id: string,
   data: Partial<User>
 ): Promise<User | null> => {
   const db = await openSqliteDb();
@@ -51,11 +49,7 @@ const updateUser = async (
     data.name ?? user.name,
     data.email ?? user.email,
     data.role ?? user.role,
-    typeof data.is_blind === "boolean"
-      ? data.is_blind
-        ? 1
-        : 0
-      : user.is_blind,
+    data.is_blind !== undefined ? (data.is_blind ? 1 : 0) : user.is_blind,
     id
   );
 
@@ -63,7 +57,7 @@ const updateUser = async (
   return updatedUser === undefined ? null : updatedUser;
 };
 
-const deleteUser = async (id: number): Promise<boolean> => {
+const deleteUser = async (id: string): Promise<boolean> => {
   const db = await openSqliteDb();
   const result = await db.run(`DELETE FROM users WHERE user_id = ?`, id);
   return !!result.changes;

@@ -42,7 +42,7 @@ const tokenAddBlacklist = async (
 };
 
 const updatePassword = async (
-  userId: number,
+  userId: string,
   newHash: string
 ): Promise<boolean> => {
   const db = await openSqliteDb();
@@ -55,17 +55,18 @@ const updatePassword = async (
 };
 
 const createPasswordReset = async (
-  userId: number,
+  userId: string,
   token: string,
   expiresAt: Date
-) => {
+): Promise<string> => {
   const db = await openSqliteDb();
-  await db.run(
+  const result = await db.run(
     `INSERT INTO password_resets (user_id, token, expires_at) VALUES (?, ?, ?)`,
     userId,
     token,
     expiresAt.toISOString()
   );
+  return result.lastID?.toString() || "";
 };
 
 const findPasswordReset = async (
@@ -79,9 +80,13 @@ const findPasswordReset = async (
   return row as PasswordReset | undefined;
 };
 
-const deletePasswordReset = async (token: string) => {
+const deletePasswordReset = async (token: string): Promise<boolean> => {
   const db = await openSqliteDb();
-  await db.run(`DELETE FROM password_resets WHERE token = ?`, token);
+  const result = await db.run(
+    `DELETE FROM password_resets WHERE token = ?`,
+    token
+  );
+  return !!result.changes;
 };
 
 const authRepo = {

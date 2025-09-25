@@ -14,7 +14,7 @@ const getUserByEmail = async (email: string) => {
   return safeUser;
 };
 
-const getUserById = async (id: number) => {
+const getUserById = async (id: string) => {
   const user = await userRepo.getUserById(id);
   if (!user) return null;
   const { password_hash, ...safeUser } = user;
@@ -26,14 +26,14 @@ const getAllUsers = async () => {
   return users.map(({ password_hash, ...rest }) => rest);
 };
 
-const updateUser = async (id: number, data: Partial<User>) => {
+const updateUser = async (id: string, data: Partial<User>) => {
   const updated = await userRepo.updateUser(id, data);
   if (!updated) return null;
   const { password_hash, ...safeUser } = updated;
   return safeUser;
 };
 
-const deleteUser = async (id: number) => {
+const deleteUser = async (id: string) => {
   return await userRepo.deleteUser(id);
 };
 

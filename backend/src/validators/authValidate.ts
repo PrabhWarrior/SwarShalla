@@ -8,7 +8,7 @@ const register = Joi.object({
     .valid("student", "teacher", "admin")
     .optional()
     .default("student"),
-  is_blind: Joi.number().default(0),
+  is_blind: Joi.number().optional().default(0),
 });
 
 const login = Joi.object({

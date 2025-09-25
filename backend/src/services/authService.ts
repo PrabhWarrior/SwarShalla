@@ -17,7 +17,7 @@ const register = async (
   if (existing) throw new Error("User already exists");
 
   const hash = await bcrypt.hash(password, 10);
-  const user: User & { user_id: number } = await userRepo.createUser({
+  const user: User & { user_id: string } = await userRepo.createUser({
     name,
     email,
     password_hash: hash,
@@ -34,7 +34,7 @@ const register = async (
 };
 
 const login = async (email: string, password: string) => {
-  const user = (await userRepo.getUserByEmail(email)) as User & { user_id: number };
+  const user = (await userRepo.getUserByEmail(email)) as User & { user_id: string };
   if (!user) throw new Error("Invalid email");
 
   const isValid = await bcrypt.compare(password, user.password_hash);
@@ -56,11 +56,11 @@ const login = async (email: string, password: string) => {
 };
 
 const changePassword = async (
-  userId: number,
+  userId: string,
   oldPassword: string,
   newPassword: string
 ) => {
-  const user = (await userRepo.getUserById(userId)) as User & { user_id: number };
+  const user = (await userRepo.getUserById(userId)) as User & { user_id: string };
   if (!user) throw new Error("User not found");
 
   const isValid = await bcrypt.compare(oldPassword, user.password_hash);
@@ -74,7 +74,7 @@ const changePassword = async (
 };
 
 const forgotPassword = async (email: string) => {
-  const user = (await userRepo.getUserByEmail(email)) as User & { user_id: number };
+  const user = (await userRepo.getUserByEmail(email)) as User & { user_id: string };
   if (!user) throw new Error("User not found");
 
   const token = crypto.randomBytes(32).toString("hex");
